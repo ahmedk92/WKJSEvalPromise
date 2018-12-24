@@ -13,6 +13,7 @@
 		28C042EF21D17E01000EC968 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 28C042EE21D17E01000EC968 /* Assets.xcassets */; };
 		28C042F221D17E01000EC968 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 28C042F021D17E01000EC968 /* LaunchScreen.storyboard */; };
 		28C042FD21D17E01000EC968 /* WKJSEvalPromiseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28C042FC21D17E01000EC968 /* WKJSEvalPromiseTests.swift */; };
+		28C0430821D17E1C000EC968 /* WKJSEvalPromise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28C0430721D17E1C000EC968 /* WKJSEvalPromise.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,6 +37,7 @@
 		28C042F821D17E01000EC968 /* WKJSEvalPromiseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WKJSEvalPromiseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		28C042FC21D17E01000EC968 /* WKJSEvalPromiseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKJSEvalPromiseTests.swift; sourceTree = "<group>"; };
 		28C042FE21D17E01000EC968 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		28C0430721D17E1C000EC968 /* WKJSEvalPromise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKJSEvalPromise.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +85,7 @@
 				28C042EE21D17E01000EC968 /* Assets.xcassets */,
 				28C042F021D17E01000EC968 /* LaunchScreen.storyboard */,
 				28C042F321D17E01000EC968 /* Info.plist */,
+				28C0430721D17E1C000EC968 /* WKJSEvalPromise.swift */,
 			);
 			path = WKJSEvalPromise;
 			sourceTree = "<group>";
@@ -199,6 +202,7 @@
 			files = (
 				28C042EA21D17E00000EC968 /* ViewController.swift in Sources */,
 				28C042E821D17E00000EC968 /* AppDelegate.swift in Sources */,
+				28C0430821D17E1C000EC968 /* WKJSEvalPromise.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
