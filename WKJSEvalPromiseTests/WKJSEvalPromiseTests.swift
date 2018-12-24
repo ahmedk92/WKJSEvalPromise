@@ -8,27 +8,72 @@
 
 import XCTest
 @testable import WKJSEvalPromise
+import WebKit
+
+let html = """
+    <html>
+        <head>
+            <script>
+                function f1() {
+                    for (var i = 0; i < 1000000000; i++) {}
+                    return "f1";
+                }
+                function f2() {
+                    for (var i = 0; i < 1000000000; i++) {}
+                    return "f2";
+                }
+                function f3() {
+                    for (var i = 0; i < 1000000000; i++) {}
+                    return "f3";
+                }
+            </script>
+        </head>
+        <body>
+        </body>
+    </html>
+"""
 
 class WKJSEvalPromiseTests: XCTestCase {
+    
+    private var webView: WKWebView!
 
     override func setUp() {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
     }
 
     override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        webView = nil
     }
 
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
+    func testSerializingLongExecution() {
+        webView.loadHTMLString(html, baseURL: nil)
+        
+        let expectation_ = expectation(description: "Serialized Callbacks")
 
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            WKJSEvalPromise.firstly(webView: self.webView) { () -> String in
+                return "f1()"
+                }
+                .then({ (result, error) -> String in
+                    XCTAssertEqual(result as! String, "f1")
+                    return "f2()"
+                })
+                .then({ (result, error) -> String in
+                    XCTAssertEqual(result as! String, "f2")
+                    return "f3()"
+                })
+                .finally { (result, error) in
+                    XCTAssertEqual(result as! String, "f3")
+                    
+                    expectation_.fulfill()
+            }
+
+        }
+        
+        waitForExpectations(timeout: 20) { (error) in
+            if let error = error {
+                print(error)
+            }
         }
     }
-
 }

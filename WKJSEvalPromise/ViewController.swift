@@ -50,23 +50,23 @@ class ViewController: UIViewController {
 extension ViewController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         
-        WKJSEvalPromise.firstly(webView: webView) { () -> String in
-            return "f1()"
-        }
-        .then({ (result, error) -> String in
-            print(result)
-            print(error)
-            return "f2()"
-        })
-        .then({ (result, error) -> String in
-            print(result)
-            print(error)
-            return "f3()"
-        })
-        .finally { (result, error) in
-            print(result)
-            print(error)
-        }
+//        WKJSEvalPromise.firstly(webView: webView) { () -> String in
+//            return "f1()"
+//        }
+//        .then({ (result, error) -> String in
+//            print(result)
+//            print(error)
+//            return "f2()"
+//        })
+//        .then({ (result, error) -> String in
+//            print(result)
+//            print(error)
+//            return "f3()"
+//        })
+//        .finally { (result, error) in
+//            print(result)
+//            print(error)
+//        }
     }
 }
 
