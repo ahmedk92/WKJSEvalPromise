@@ -8,72 +8,47 @@
 
 import XCTest
 @testable import WKJSEvalPromise
-import WebKit
 
-let html = """
-    <html>
-        <head>
-            <script>
-                function f1() {
-                    for (var i = 0; i < 1000000000; i++) {}
-                    return "f1";
-                }
-                function f2() {
-                    for (var i = 0; i < 1000000000; i++) {}
-                    return "f2";
-                }
-                function f3() {
-                    for (var i = 0; i < 1000000000; i++) {}
-                    return "f3";
-                }
-            </script>
-        </head>
-        <body>
-        </body>
-    </html>
-"""
+class JSEvaluatorMock: JSEvaluator {
+    var queue = DispatchQueue(label: "JSEvaluatorMock")
+    
+    func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)?) {
+        queue.async {
+            sleep(UInt32.random(in: 0...5))
+            completionHandler!(javaScriptString, nil)
+        }
+    }
+}
+
 
 class WKJSEvalPromiseTests: XCTestCase {
     
-    private var webView: WKWebView!
+    private var jsEvaluator: JSEvaluatorMock!
 
     override func setUp() {
-        webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
+        jsEvaluator = JSEvaluatorMock()
     }
 
     override func tearDown() {
-        webView = nil
+        jsEvaluator = nil
     }
 
     func testSerializingLongExecution() {
-        webView.loadHTMLString(html, baseURL: nil)
-        
-        let expectation_ = expectation(description: "Serialized Callbacks")
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            WKJSEvalPromise.firstly(webView: self.webView) { () -> String in
-                return "f1()"
-                }
-                .then({ (result, error) -> String in
-                    XCTAssertEqual(result as! String, "f1")
-                    return "f2()"
-                })
-                .then({ (result, error) -> String in
-                    XCTAssertEqual(result as! String, "f2")
-                    return "f3()"
-                })
-                .finally { (result, error) in
-                    XCTAssertEqual(result as! String, "f3")
-                    
-                    expectation_.fulfill()
-            }
-
+        WKJSEvalPromise.firstly(jsEvaluator: jsEvaluator) { () -> String in
+            return "f1()"
+        }
+        .then { (result, error) -> String in
+            XCTAssertEqual(result as! String, "f1()")
+            return "f2()"
+        }
+        .then { (result, error) -> String in
+            XCTAssertEqual(result as! String, "f2()")
+            return "f3()"
+        }
+        .finally { (result, error) in
+            XCTAssertEqual(result as! String, "f3()")
         }
         
-        waitForExpectations(timeout: 20) { (error) in
-            if let error = error {
-                print(error)
-            }
-        }
+        jsEvaluator.queue.sync {}
     }
 }

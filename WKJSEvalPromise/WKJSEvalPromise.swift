@@ -13,7 +13,7 @@ class WKJSEvalPromise {
     typealias EvalCallbackWithJSString = (Any?, Error?) -> String
     typealias FirstCallback = () -> String
     
-    private weak var webView: WKWebView!
+    private weak var jsEvaluator: JSEvaluator!
     private var action: () -> () = {}
     private var nextFuture: WKJSEvalPromise?
     private var result: Any?
@@ -22,26 +22,26 @@ class WKJSEvalPromise {
     
     private init() {}
     
-    class func firstly(webView: WKWebView, callback: @escaping FirstCallback) -> WKJSEvalPromise {
-        let promise = makePromise(webView: webView, js: callback())
+    class func firstly(jsEvaluator: JSEvaluator, callback: @escaping FirstCallback) -> WKJSEvalPromise {
+        let promise = makePromise(jsEvaluator: jsEvaluator, js: callback())
         promise.action()
         
         return promise
     }
     
     func then(_ callback: @escaping EvalCallbackWithJSString) -> WKJSEvalPromise {
-        let promise: WKJSEvalPromise = .makePromise(webView: webView, js: callback(self.result, self.error))
+        let promise: WKJSEvalPromise = .makePromise(jsEvaluator: jsEvaluator, js: callback(self.result, self.error))
         
         nextFuture = promise
         
         return promise
     }
     
-    private class func makePromise(webView: WKWebView, js: @escaping @autoclosure () -> String) -> WKJSEvalPromise {
+    private class func makePromise(jsEvaluator: JSEvaluator, js: @escaping @autoclosure () -> String) -> WKJSEvalPromise {
         let promise = WKJSEvalPromise()
-        promise.webView = webView
+        promise.jsEvaluator = jsEvaluator
         promise.action = {
-            webView.evaluateJavaScript(js(), completionHandler: { (result, error) in
+            jsEvaluator.evaluateJavaScript(js(), completionHandler: { (result, error) in
                 promise.result = result
                 promise.error = error
                 promise.nextFuture?.action()
@@ -56,3 +56,9 @@ class WKJSEvalPromise {
         finalCallback = callback
     }
 }
+
+protocol JSEvaluator: class {
+    func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)?)
+}
+
+extension WKWebView: JSEvaluator {}
