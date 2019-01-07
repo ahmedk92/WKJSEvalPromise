@@ -13,6 +13,14 @@ enum MockError: Error {
     case mock
 }
 
+class JSEvaluatorMockErrorAndValid: JSEvaluator {
+    var resultAndError: (result: Any?, error: Error?)
+    
+    func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)?) {
+        completionHandler!(resultAndError.result, resultAndError.error)
+    }
+}
+
 class JSEvaluatorMockErrorThrower: JSEvaluator {
     func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)?) {
         completionHandler!(nil, MockError.mock)
@@ -126,7 +134,29 @@ class WKJSEvalPromiseTests: XCTestCase {
         .catch { (error) in
             expectedError = error
         }.finally {
-                
+        }
+        
+        XCTAssertNotNil(expectedError)
+        XCTAssert(expectedError is MockError)
+    }
+    
+    func testCatchAtMiddle() {
+        let jsEvaluator = JSEvaluatorMockErrorAndValid()
+        jsEvaluator.resultAndError = (nil, MockError.mock)
+        
+        var expectedError: Error? = nil
+        
+        WKJSEvalPromise.firstly(jsEvaluator: jsEvaluator) {
+            return "f1()"
+        }
+        .catch { (error) in
+            expectedError = error
+        }
+        .then {
+            return "f2()"
+        }
+        .finally { (result) in
+            XCTAssertEqual(result as! String, "f2()")
         }
         
         XCTAssertNotNil(expectedError)

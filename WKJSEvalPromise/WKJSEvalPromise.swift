@@ -49,11 +49,7 @@ class WKJSEvalPromiseBase {
         case .rejected(let error):
             catchCallback?(error)
             nextFuture?.action?()
-            if let result = result {
-                finalCallback?(result)
-            } else {
-                emptyFinalCallback?()
-            }
+            emptyFinalCallback?()
         case .pending:
             break
         }
@@ -95,6 +91,7 @@ class WKJSEvalPromise: WKJSEvalPromiseBase {
     func `catch`(_ callback: @escaping CatchCallback) -> WKJSEvalPromiseBase {
         
         catchCallback = callback
+        resume()
         
         return self
     }
@@ -113,7 +110,10 @@ class WKJSEvalPromise: WKJSEvalPromiseBase {
         return promise
     }
     
-    
+    @available(*, unavailable, message:"Child can't doThat")
+    override func finally(_ callback: @escaping () -> ()) {
+        super.finally(callback)
+    }
     
     func finally(_ callback: @escaping EvalCallback) {
         finalCallback = callback
