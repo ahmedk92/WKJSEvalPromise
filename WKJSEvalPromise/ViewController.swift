@@ -53,19 +53,18 @@ extension ViewController: WKNavigationDelegate {
         WKJSEvalPromise.firstly(jsEvaluator: webView) { () -> String in
             return "f1()"
         }
-        .then({ (result, error) -> String in
+        .then { (result) -> String in
             print(result)
+            return "null()"
+        }
+        .catch { (error) in
             print(error)
-            return "f2()"
-        })
-        .then({ (result, error) -> String in
-            print(result)
-            print(error)
+        }
+        .then {
             return "f3()"
-        })
-        .finally { (result, error) in
+        }
+        .finally { (result) in
             print(result)
-            print(error)
         }
     }
 }

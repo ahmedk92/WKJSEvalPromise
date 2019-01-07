@@ -8,52 +8,106 @@
 
 import WebKit
 
-class WKJSEvalPromise {
-    typealias EvalCallback = (Any?, Error?) -> ()
-    typealias EvalCallbackWithJSString = (Any?, Error?) -> String
+class WKJSEvalPromiseBase {
     typealias FirstCallback = () -> String
+    typealias EvalCallback = (Any) -> ()
+    typealias EvalCallbackWithJSString = (Any) -> String
+    typealias CatchCallback = (Error) -> ()
     
-    private weak var jsEvaluator: JSEvaluator!
-    private var action: () -> () = {}
-    private var nextFuture: WKJSEvalPromise?
-    private var result: Any?
-    private var error: Error?
-    private var finalCallback: EvalCallback?
+    private enum State {
+        case pending
+        case fulfilled(Any)
+        case rejected(Error)
+    }
     
-    private init() {}
+    private var state: State {
+        if let result = result {
+            return .fulfilled(result)
+        } else if let error = error {
+            return .rejected(error)
+        }
+        
+        return .pending
+    }
+    
+    fileprivate weak var jsEvaluator: JSEvaluator!
+    fileprivate var nextFuture: WKJSEvalPromise?
+    fileprivate var action: (() -> ())?
+    fileprivate var result: Any?
+    fileprivate var error: Error?
+    fileprivate var finalCallback: EvalCallback?
+    fileprivate var catchCallback: CatchCallback?
+    
+    fileprivate init() {}
+    
+    fileprivate func resume() {
+        switch state {
+        case .fulfilled(let result):
+            nextFuture?.action?()
+            finalCallback?(result)
+        case .rejected(let error):
+            catchCallback?(error)
+            nextFuture?.action?()
+            finalCallback?(result!)
+        case .pending:
+            break
+        }
+    }
     
     class func firstly(jsEvaluator: JSEvaluator, callback: @escaping FirstCallback) -> WKJSEvalPromise {
-        let promise = makePromise(jsEvaluator: jsEvaluator, js: callback())
-        promise.action()
+        let promise = WKJSEvalPromise.makePromise(jsEvaluator: jsEvaluator, js: callback())
+        promise.action?()
         
         return promise
     }
     
-    func then(_ callback: @escaping EvalCallbackWithJSString) -> WKJSEvalPromise {
-        let promise: WKJSEvalPromise = .makePromise(jsEvaluator: jsEvaluator, js: callback(self.result, self.error))
+    func then(_ callback: @escaping FirstCallback) -> WKJSEvalPromise {
+        let promise: WKJSEvalPromise = .makePromise(jsEvaluator: jsEvaluator, js: callback())
         
         nextFuture = promise
+        resume() // If needed
+        
+        return promise
+    }
+}
+
+class WKJSEvalPromise: WKJSEvalPromiseBase {
+    
+    func then(_ callback: @escaping EvalCallbackWithJSString) -> WKJSEvalPromise {
+        let promise: WKJSEvalPromise = .makePromise(jsEvaluator: jsEvaluator, js: callback(self.result!))
+        
+        nextFuture = promise
+        resume() // If needed
         
         return promise
     }
     
-    private class func makePromise(jsEvaluator: JSEvaluator, js: @escaping @autoclosure () -> String) -> WKJSEvalPromise {
+    func `catch`(_ callback: @escaping CatchCallback) -> WKJSEvalPromiseBase {
+        
+        catchCallback = callback
+        
+        return self
+    }
+    
+    fileprivate class func makePromise(jsEvaluator: JSEvaluator, js: @escaping @autoclosure () -> String) -> WKJSEvalPromise {
         let promise = WKJSEvalPromise()
         promise.jsEvaluator = jsEvaluator
         promise.action = {
             jsEvaluator.evaluateJavaScript(js(), completionHandler: { (result, error) in
                 promise.result = result
                 promise.error = error
-                promise.nextFuture?.action()
-                promise.finalCallback?(result, error)
+                promise.resume()
             })
         }
         
         return promise
     }
     
+    
+    
     func finally(_ callback: @escaping EvalCallback) {
         finalCallback = callback
+        resume()
     }
 }
 

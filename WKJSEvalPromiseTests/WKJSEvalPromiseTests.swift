@@ -9,7 +9,7 @@
 import XCTest
 @testable import WKJSEvalPromise
 
-class JSEvaluatorMock: JSEvaluator {
+class JSEvaluatorMockSlow: JSEvaluator {
     var queue = DispatchQueue(label: "JSEvaluatorMock")
     
     func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)?) {
@@ -20,26 +20,27 @@ class JSEvaluatorMock: JSEvaluator {
     }
 }
 
+class JSEvaluatorMockFast: JSEvaluator {
+    
+    func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)?) {
+        completionHandler!(javaScriptString, nil)
+    }
+}
+
+
 
 class WKJSEvalPromiseTests: XCTestCase {
-    
-    private var jsEvaluator: JSEvaluatorMock!
-
-    override func setUp() {
-        jsEvaluator = JSEvaluatorMock()
-    }
-
-    override func tearDown() {
-        jsEvaluator = nil
-    }
 
     func testSerializingLongExecution() {
+        
+        let jsEvaluator = JSEvaluatorMockSlow()
+        
         var count = 3
         
         WKJSEvalPromise.firstly(jsEvaluator: jsEvaluator) { () -> String in
             return "f1()"
         }
-        .then { (result, error) -> String in
+        .then { (result) -> String in
             XCTAssertEqual(result as! String, "f1()")
             
             count -= 1
@@ -47,7 +48,7 @@ class WKJSEvalPromiseTests: XCTestCase {
             
             return "f2()"
         }
-        .then { (result, error) -> String in
+        .then { (result) -> String in
             XCTAssertEqual(result as! String, "f2()")
             
             count -= 1
@@ -55,7 +56,7 @@ class WKJSEvalPromiseTests: XCTestCase {
             
             return "f3()"
         }
-        .finally { (result, error) in
+        .finally { (result) in
             XCTAssertEqual(result as! String, "f3()")
             
             count -= 1
