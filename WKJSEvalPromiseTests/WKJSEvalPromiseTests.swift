@@ -59,9 +59,13 @@ class WKJSEvalPromiseTests: XCTestCase {
             XCTAssertEqual(result as! String, "f3()")
             
             count -= 1
-            XCTAssertEqual(count, 0)
         }
         
+        // Wait for every async call; not just one.
         jsEvaluator.queue.sync {}
+        jsEvaluator.queue.sync {}
+        jsEvaluator.queue.sync {}
+        
+        XCTAssertEqual(count, 0)
     }
 }
