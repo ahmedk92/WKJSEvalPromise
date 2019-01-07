@@ -36,6 +36,7 @@ class WKJSEvalPromiseBase {
     fileprivate var result: Any?
     fileprivate var error: Error?
     fileprivate var finalCallback: EvalCallback?
+    fileprivate var emptyFinalCallback: (() -> ())?
     fileprivate var catchCallback: CatchCallback?
     
     fileprivate init() {}
@@ -48,7 +49,11 @@ class WKJSEvalPromiseBase {
         case .rejected(let error):
             catchCallback?(error)
             nextFuture?.action?()
-            finalCallback?(result!)
+            if let result = result {
+                finalCallback?(result)
+            } else {
+                emptyFinalCallback?()
+            }
         case .pending:
             break
         }
@@ -68,6 +73,11 @@ class WKJSEvalPromiseBase {
         resume() // If needed
         
         return promise
+    }
+    
+    func finally(_ callback: @escaping () -> ()) {
+        emptyFinalCallback = callback
+        resume()
     }
 }
 
