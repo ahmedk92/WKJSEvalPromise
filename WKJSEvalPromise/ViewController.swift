@@ -50,7 +50,7 @@ class ViewController: UIViewController {
 extension ViewController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         
-        WKJSEvalPromise.firstly(jsEvaluator: webView) { () -> String in
+        WKJSEvalPromise.firstly(jsEvaluator: webView) {
             return "f1()"
         }
         .then { (result) -> String in

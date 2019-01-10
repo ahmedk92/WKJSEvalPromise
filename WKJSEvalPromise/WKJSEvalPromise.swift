@@ -45,10 +45,15 @@ class WKJSEvalPromiseBase {
         switch state {
         case .fulfilled(let result):
             nextFuture?.action?()
+            nextFuture?.action = nil
+            
             finalCallback?(result)
         case .rejected(let error):
             catchCallback?(error)
+            
             nextFuture?.action?()
+            nextFuture?.action = nil
+            
             emptyFinalCallback?()
         case .pending:
             break
@@ -58,6 +63,7 @@ class WKJSEvalPromiseBase {
     class func firstly(jsEvaluator: JSEvaluator, callback: @escaping FirstCallback) -> WKJSEvalPromise {
         let promise = WKJSEvalPromise.makePromise(jsEvaluator: jsEvaluator, js: callback())
         promise.action?()
+        promise.action = nil
         
         return promise
     }
