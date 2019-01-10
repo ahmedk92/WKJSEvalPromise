@@ -8,6 +8,10 @@
 
 import WebKit
 
+enum WKJSEvalPromiseError: Error {
+    case noJSEvaluator
+}
+
 class WKJSEvalPromiseBase {
     typealias FirstCallback = () -> String
     typealias EvalCallback = (Any) -> ()
@@ -30,7 +34,7 @@ class WKJSEvalPromiseBase {
         return .pending
     }
     
-    fileprivate weak var jsEvaluator: JSEvaluator!
+    fileprivate weak var jsEvaluator: JSEvaluator?
     fileprivate var nextFuture: WKJSEvalPromise?
     fileprivate var action: (() -> ())?
     fileprivate var result: Any?
@@ -102,10 +106,15 @@ class WKJSEvalPromise: WKJSEvalPromiseBase {
         return self
     }
     
-    fileprivate class func makePromise(jsEvaluator: JSEvaluator, js: @escaping @autoclosure () -> String) -> WKJSEvalPromise {
+    fileprivate class func makePromise(jsEvaluator: JSEvaluator?, js: @escaping @autoclosure () -> String) -> WKJSEvalPromise {
         let promise = WKJSEvalPromise()
         promise.jsEvaluator = jsEvaluator
         promise.action = {
+            guard let jsEvaluator = jsEvaluator else {
+                promise.error = WKJSEvalPromiseError.noJSEvaluator
+                promise.resume()
+                return
+            }
             jsEvaluator.evaluateJavaScript(js(), completionHandler: { (result, error) in
                 promise.result = result
                 promise.error = error

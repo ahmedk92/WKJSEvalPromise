@@ -162,4 +162,22 @@ class WKJSEvalPromiseTests: XCTestCase {
         XCTAssertNotNil(expectedError)
         XCTAssert(expectedError is MockError)
     }
+    
+    func testNoJSEvaluatorError() {
+        var jsEvaluator: JSEvaluator? = JSEvaluatorMockFast()
+        var expectedError: Error?
+        WKJSEvalPromise.firstly(jsEvaluator: jsEvaluator!) {
+            jsEvaluator = nil
+            return "f1()"
+        }
+        .then({ (result) -> String in
+            return "f2()"
+        })
+        .catch { (error) in
+            expectedError = error
+        }
+        
+        XCTAssertNotNil(expectedError)
+        XCTAssert(expectedError is WKJSEvalPromiseError)
+    }
 }
