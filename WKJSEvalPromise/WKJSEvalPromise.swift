@@ -98,6 +98,7 @@ class WKJSEvalPromise: WKJSEvalPromiseBase {
         return promise
     }
     
+    @discardableResult
     func `catch`(_ callback: @escaping CatchCallback) -> WKJSEvalPromiseBase {
         
         catchCallback = callback
